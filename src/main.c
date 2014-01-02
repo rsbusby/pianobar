@@ -237,6 +237,7 @@ static void BarMainGetPlaylist (BarApp_t *app) {
 	PianoReturn_t pRet;
 	WaitressReturn_t wRet;
 	PianoRequestDataGetPlaylist_t reqData;
+
 	reqData.station = app->curStation;
 	reqData.quality = app->settings.audioQuality;
 
@@ -261,6 +262,19 @@ static void BarMainGetPlaylist (BarApp_t *app) {
 static void BarMainStartPlayback (BarApp_t *app, pthread_t *playerThread) {
 	assert (app != NULL);
 	assert (playerThread != NULL);
+
+	/* ads */
+	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+	PianoRequestDataGetAdMetadata_t adReqData;
+	char token[100];
+	snprintf (token, sizeof (token)-1, "%s-none", app->curStation->id);
+
+	adReqData.token = strdup (token);
+	BarUiMsg (&app->settings, MSG_INFO, "Fetching ads... ");
+	BarUiPianoCall (app, PIANO_REQUEST_GET_AD_METADATA,
+			&adReqData, &pRet, &wRet);
+	free (adReqData.token);
 
 	const PianoSong_t * const curSong = app->playlist;
 	assert (curSong != NULL);
