@@ -923,6 +923,11 @@ static WaitressReturn_t WaitressSendRequest (WaitressHandle_t *waith) {
 	}
 	WRITE_RET (buf, strlen (buf));
 
+	snprintf (buf, WAITRESS_BUFFER_SIZE,
+			"Host: %s\r\nUser-Agent: Pandora/1.2.3 Android/4.4.1 12345\r\nConnection: Close\r\n",
+			waith->url.host);
+	WRITE_RET (buf, strlen (buf));
+
 	if (waith->method == WAITRESS_METHOD_POST && waith->postData != NULL) {
 		snprintf (buf, WAITRESS_BUFFER_SIZE, "Content-Length: %zu\r\n",
 				strlen (waith->postData));
