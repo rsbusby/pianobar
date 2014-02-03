@@ -266,14 +266,36 @@ static void BarMainStartPlayback (BarApp_t *app, pthread_t *playerThread) {
 	/* ads */
 	PianoReturn_t pRet;
 	WaitressReturn_t wRet;
-	PianoRequestDataGetAdMetadata_t adReqData;
 
+	/* is this an advertising track? */
 	if (app->playlist->adToken != NULL) {
+		PianoRequestDataGetAdMetadata_t adReqData;
+
 		adReqData.token = app->playlist->adToken;
+
 		BarUiMsg (&app->settings, MSG_INFO, "Fetching ads with token %s... ",
 				adReqData.token);
 		BarUiPianoCall (app, PIANO_REQUEST_GET_AD_METADATA,
 				&adReqData, &pRet, &wRet);
+
+		/* got token? */
+		if (adReqData.retTokenCount > 0) {
+			PianoRequestDataRegisterAd_t regReqData;
+
+			regReqData.token = adReqData.retToken;
+			regReqData.tokenCount = adReqData.retTokenCount;
+			regReqData.station = app->curStation;
+
+			BarUiMsg (&app->settings, MSG_INFO, "Registering ad... ");
+			BarUiPianoCall (app, PIANO_REQUEST_REGISTER_AD, &regReqData, &pRet,
+					&wRet);
+
+			/* delete */
+			for (size_t i = 0; i < adReqData.retTokenCount; i++) {
+				free (adReqData.retToken[i]);
+			}
+			free (adReqData.retToken);
+		}
 	}
 
 	const PianoSong_t * const curSong = app->playlist;
