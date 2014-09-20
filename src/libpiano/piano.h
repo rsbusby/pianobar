@@ -250,6 +250,8 @@ typedef struct {
 
 typedef struct {
 	char *token;
+	PianoSong_t *song;
+	PianoAudioQuality_t quality;
 	char **retToken;
 	size_t retTokenCount;
 } PianoRequestDataGetAdMetadata_t;

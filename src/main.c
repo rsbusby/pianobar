@@ -263,16 +263,21 @@ static void BarMainStartPlayback (BarApp_t *app, pthread_t *playerThread) {
 	assert (app != NULL);
 	assert (playerThread != NULL);
 
+	const PianoSong_t * const curSong = app->playlist;
+	assert (curSong != NULL);
+
 	/* ads */
 	PianoReturn_t pRet;
 	WaitressReturn_t wRet;
 
 	/* is this an advertising track? */
-	if (app->playlist->adToken != NULL) {
+	if (curSong->adToken != NULL) {
 		PianoRequestDataGetAdMetadata_t adReqData;
 
 		memset (&adReqData, 0, sizeof (adReqData));
-		adReqData.token = app->playlist->adToken;
+		adReqData.token = curSong->adToken;
+		adReqData.song = curSong;
+		adReqData.quality = app->settings.audioQuality;
 
 		BarUiMsg (&app->settings, MSG_INFO, "Fetching ads with token %s... ",
 				adReqData.token);
@@ -298,9 +303,6 @@ static void BarMainStartPlayback (BarApp_t *app, pthread_t *playerThread) {
 			free (adReqData.retToken);
 		}
 	}
-
-	const PianoSong_t * const curSong = app->playlist;
-	assert (curSong != NULL);
 
 	BarUiPrintSong (&app->settings, curSong, app->curStation->isQuickMix ?
 			PianoFindStationById (app->ph.stations,

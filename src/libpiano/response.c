@@ -79,6 +79,39 @@ static void PianoStrpcat (char * restrict dest, const char * restrict src,
 	*dest = '\0';
 }
 
+static bool audioMapSelect (json_object * const map,
+		const PianoAudioQuality_t quality, PianoSong_t * const song) {
+	assert (map != NULL);
+	assert (quality != PIANO_AQ_UNKNOWN);
+	assert (song != NULL);
+
+	/* get audio url based on selected quality */
+	static const char *qualityMap[] = {"", "lowQuality", "mediumQuality",
+			"highQuality"};
+	assert (quality < sizeof (qualityMap)/sizeof (*qualityMap));
+	static const char *formatMap[] = {"", "aacplus", "mp3"};
+
+	json_object * const item =
+			json_object_object_get (map, qualityMap[quality]);
+
+	if (item == NULL) {
+		/* requested quality is not available */
+		return false;
+	}
+
+	const char *encoding = json_object_get_string (
+			json_object_object_get (item, "encoding"));
+	assert (encoding != NULL);
+	for (size_t k = 0; k < sizeof (formatMap)/sizeof (*formatMap); k++) {
+		if (strcmp (formatMap[k], encoding) == 0) {
+			song->audioFormat = k;
+			break;
+		}
+	}
+	song->audioUrl = PianoJsonStrdup (item, "audioUrl");
+	return true;
+}
+
 /*	parse xml response and update data structures/return new data structure
  *	@param piano handle
  *	@param initialized request (expects responseData to be a NUL-terminated
@@ -240,27 +273,9 @@ PianoReturn_t PianoResponse (PianoHandle_t *ph, PianoRequest_t *req) {
 				}
 
 				/* get audio url based on selected quality */
-				static const char *qualityMap[] = {"", "lowQuality", "mediumQuality",
-						"highQuality"};
-				assert (reqData->quality < sizeof (qualityMap)/sizeof (*qualityMap));
-				static const char *formatMap[] = {"", "aacplus", "mp3"};
-				json_object *map = json_object_object_get (s, "audioUrlMap");
-
+				json_object * const map = json_object_object_get (s, "audioUrlMap");
 				if (map != NULL) {
-					map = json_object_object_get (map, qualityMap[reqData->quality]);
-
-					if (map != NULL) {
-						const char *encoding = json_object_get_string (
-								json_object_object_get (map, "encoding"));
-						assert (encoding != NULL);
-						for (size_t k = 0; k < sizeof (formatMap)/sizeof (*formatMap); k++) {
-							if (strcmp (formatMap[k], encoding) == 0) {
-								song->audioFormat = k;
-								break;
-							}
-						}
-						song->audioUrl = PianoJsonStrdup (map, "audioUrl");
-					} else {
+					if (!audioMapSelect (map, reqData->quality, song)) {
 						/* requested quality is not available */
 						ret = PIANO_RET_QUALITY_UNAVAILABLE;
 						free (song);
@@ -607,6 +622,8 @@ PianoReturn_t PianoResponse (PianoHandle_t *ph, PianoRequest_t *req) {
 			PianoRequestDataGetAdMetadata_t *reqData = req->data;
 
 			assert (reqData != NULL);
+			assert (reqData->song != NULL);
+			assert (reqData->quality != PIANO_AQ_UNKNOWN);
 
 			json_object *token = json_object_object_get (result,
 					"adTrackingTokens");
@@ -625,6 +642,21 @@ PianoReturn_t PianoResponse (PianoHandle_t *ph, PianoRequest_t *req) {
 				reqData->retTokenCount = 0;
 				reqData->retToken = NULL;
 			}
+
+			PianoSong_t * const song = reqData->song;
+			json_object * const map = json_object_object_get (result, "audioUrlMap");
+			if (map != NULL) {
+				if (!audioMapSelect (map, reqData->quality, song)) {
+					/* requested quality is not available */
+					ret = PIANO_RET_QUALITY_UNAVAILABLE;
+					break;
+				}
+			}
+			song->artist = PianoJsonStrdup (result, "companyName");
+			song->title = PianoJsonStrdup (result, "title");
+			song->album = strdup ("");
+			song->fileGain = json_object_get_double (
+					json_object_object_get (result, "trackGain"));
 			break;
 		}
 
