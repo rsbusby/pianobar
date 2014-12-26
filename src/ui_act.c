@@ -168,7 +168,7 @@ BarUiActCallback(BarUiActCreateStation) {
 	}
 }
 
-/*	create new station
+/*	create new station 
  */
 BarUiActCallback(BarUiActCreateStationFromSong) {
 	PianoReturn_t pRet;
@@ -197,6 +197,120 @@ BarUiActCallback(BarUiActCreateStationFromSong) {
 		BarUiActDefaultEventcmd ("stationcreate");
 	}
 }
+
+/*	create new station from artist forced
+ */
+BarUiActCallback(BarUiActForceCreateStationFromArtist) {
+	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+	PianoRequestDataCreateStation_t reqData;
+	char selectBuf[2];
+
+	reqData.token = selSong->trackToken;
+	reqData.type = PIANO_MUSICTYPE_INVALID;
+
+	
+			reqData.type = PIANO_MUSICTYPE_ARTIST;
+	
+    
+	if (reqData.type != PIANO_MUSICTYPE_INVALID) {
+		BarUiMsg (&app->settings, MSG_INFO, "Creating station... ");
+		BarUiActDefaultPianoCall (PIANO_REQUEST_CREATE_STATION, &reqData);
+		BarUiActDefaultEventcmd ("stationcreate");
+	}
+}
+
+
+
+/* toggle meta shuffle
+ */
+BarUiActCallback(BarUiActToggleMetaShuffle) {
+
+
+  app->metaShuffle = 1;
+  BarUiMsg (&app->settings, MSG_ERR, "Starting metaShuffle.");
+  /* create a new station 
+  	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+  	PianoRequestDataCreateStation_t reqData;
+
+  app->metaArtist = selSong->artist;
+  reqData.token = selSong->trackToken;
+  
+  reqData.type = PIANO_MUSICTYPE_ARTIST;
+  
+  //BarUiMsg (&app->settings, MSG_INFO, "Creating station for use in metaShuffle ... ");
+  BarUiActDefaultPianoCall (PIANO_REQUEST_CREATE_STATION, &reqData);
+  		free (reqData.token);
+
+  BarUiActDefaultEventcmd ("stationcreate");
+  */
+
+
+  
+}
+
+
+
+/*	create new station from artist forced
+ */
+void createStationFromCurrentArtist(BarApp_t *app) {
+
+  
+	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+	PianoRequestDataCreateStation_t reqData;
+	char selectBuf[2];
+
+    PianoStation_t *selStation = app->curStation;
+    PianoSong_t *selSong = app->playlist;
+    /* PianoSong_t *curSong = app->playlist; */
+    
+	reqData.token = selSong->trackToken;
+    reqData.type = PIANO_MUSICTYPE_ARTIST;
+    
+	if (reqData.type != PIANO_MUSICTYPE_INVALID) {
+		BarUiMsg (&app->settings, MSG_INFO, "Creating station... ");
+		BarUiActDefaultPianoCall (PIANO_REQUEST_CREATE_STATION, &reqData);
+		BarUiActDefaultEventcmd ("stationcreate");
+	}
+
+}
+
+
+/*	delete current station without asking
+ */
+void deleteCurrentStation(BarApp_t *app) {
+	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+    
+    PianoStation_t *selStation = app->curStation;
+    PianoSong_t *selSong = app->playlist;
+    
+	assert (selStation != NULL);
+
+	BarUiMsg (&app->settings, MSG_QUESTION, "Really delete \"%s\"? [yN] ",
+			selStation->name);
+	if (BarReadlineYesNo (false, &app->input)) {
+    //if (1){
+		BarUiMsg (&app->settings, MSG_INFO, "Deleting station... ");
+		if (BarUiActDefaultPianoCall (PIANO_REQUEST_DELETE_STATION,
+				selStation) && selStation == app->curStation) {
+			BarUiDoSkipSong (&app->player);
+			PianoDestroyPlaylist (PianoListNextP (app->playlist));
+			app->playlist->head.next = NULL;
+			BarUiHistoryPrepend (app, app->playlist);
+			app->playlist = NULL;
+			app->curStation = NULL;
+		}
+		BarUiActDefaultEventcmd ("stationdelete");
+	}
+    
+
+}
+
+
+
 
 /*	add shared station by id
  */
@@ -229,6 +343,32 @@ BarUiActCallback(BarUiActDeleteStation) {
 	BarUiMsg (&app->settings, MSG_QUESTION, "Really delete \"%s\"? [yN] ",
 			selStation->name);
 	if (BarReadlineYesNo (false, &app->input)) {
+		BarUiMsg (&app->settings, MSG_INFO, "Deleting station... ");
+		if (BarUiActDefaultPianoCall (PIANO_REQUEST_DELETE_STATION,
+				selStation) && selStation == app->curStation) {
+			BarUiDoSkipSong (&app->player);
+			PianoDestroyPlaylist (PianoListNextP (app->playlist));
+			app->playlist->head.next = NULL;
+			BarUiHistoryPrepend (app, app->playlist);
+			app->playlist = NULL;
+			app->curStation = NULL;
+		}
+		BarUiActDefaultEventcmd ("stationdelete");
+	}
+}
+
+/*	delete current station without asking
+ */
+BarUiActCallback(BarUiActForceDeleteStation) {
+	PianoReturn_t pRet;
+	WaitressReturn_t wRet;
+
+	assert (selStation != NULL);
+
+	//BarUiMsg (&app->settings, MSG_QUESTION, "Really delete \"%s\"? [yN] ",
+	//		selStation->name);
+	//if (BarReadlineYesNo (false, &app->input)) {
+    if (1){
 		BarUiMsg (&app->settings, MSG_INFO, "Deleting station... ");
 		if (BarUiActDefaultPianoCall (PIANO_REQUEST_DELETE_STATION,
 				selStation) && selStation == app->curStation) {
@@ -477,6 +617,44 @@ BarUiActCallback(BarUiActSelectStation) {
 	}
 }
 
+/*	play the last station
+ */
+BarUiActCallback(BarUiActSelectLastStation) {
+	PianoStation_t *newStation = BarUiSelectLastStation (app, app->ph.stations,
+			"Select station: ", NULL, app->settings.autoselect);
+	if (newStation != NULL) {
+		app->curStation = newStation;
+		BarUiPrintStation (&app->settings, app->curStation);
+		BarUiDoSkipSong (&app->player);
+		if (app->playlist != NULL) {
+			PianoDestroyPlaylist (PianoListNextP (app->playlist));
+			app->playlist->head.next = NULL;
+			BarUiHistoryPrepend (app, app->playlist);
+			app->playlist = NULL;
+		}
+	}
+}
+
+/*	play station based on artist name
+ 
+BarUiActCallback(BarUiActSelectStationByName) {
+	PianoStation_t *newStation = BarUiSelectStationByName (app, app->ph.stations,
+			"Select station: ", NULL, app->settings.autoselect);
+	if (newStation != NULL) {
+		app->curStation = newStation;
+		BarUiPrintStation (&app->settings, app->curStation);
+		BarUiDoSkipSong (&app->player);
+		if (app->playlist != NULL) {
+			PianoDestroyPlaylist (PianoListNextP (app->playlist));
+			app->playlist->head.next = NULL;
+			BarUiHistoryPrepend (app, app->playlist);
+			app->playlist = NULL;
+		}
+	}
+}
+*/
+
+
 /*	ban song for 1 month
  */
 BarUiActCallback(BarUiActTempBanSong) {
@@ -485,7 +663,7 @@ BarUiActCallback(BarUiActTempBanSong) {
 
 	assert (selSong != NULL);
 
-	BarUiMsg (&app->settings, MSG_INFO, "Putting song on shelf... ");
+	BarUiMsg (&app->settings, MSG_INFO, "Putting song on the shelf... ");
 	if (BarUiActDefaultPianoCall (PIANO_REQUEST_ADD_TIRED_SONG, selSong) &&
 			selSong == app->playlist) {
 		BarUiDoSkipSong (&app->player);

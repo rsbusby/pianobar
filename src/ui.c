@@ -90,6 +90,35 @@ static const char *BarStrCaseStr (const char *haystack, const char *needle) {
 	return NULL;
 }
 
+
+/*	find needle in haystack, ignoring case, and return first position
+ */
+char *BarStrCaseStr2 (const char *haystack, const char *needle) {
+	const char *needlePos = needle;
+
+	assert (haystack != NULL);
+	assert (needle != NULL);
+
+	if (*needle == '\0') {
+		return haystack;
+	}
+
+	while (*haystack != '\0') {
+		if (tolower ((unsigned char) *haystack) == tolower ((unsigned char) *needlePos)) {
+			++needlePos;
+		} else {
+			needlePos = needle;
+		}
+		++haystack;
+		if (*needlePos == '\0') {
+			return haystack - strlen (needle);
+		}
+	}
+
+	return NULL;
+}
+
+
 /*	output message and flush stdout
  *	@param message
  */
@@ -378,7 +407,7 @@ PianoStation_t *BarUiSelectStation (BarApp_t *app, PianoStation_t *stations,
 			if (isnumeric (buf)) {
 				unsigned long selected = strtoul (buf, NULL, 0);
 				if (selected < stationCount) {
-					retStation = sortedStations[selected];
+                  retStation = sortedStations[selected];
 				}
 			}
 
@@ -392,6 +421,84 @@ PianoStation_t *BarUiSelectStation (BarApp_t *app, PianoStation_t *stations,
 	free (sortedStations);
 	return retStation;
 }
+
+
+/*	pick station by name
+ *	@param app handle
+ *	@param stations that should be listed
+ *	@param prompt string
+ *	@param called if input was not a number
+ *	@param auto-select if only one station remains after filtering
+ *	@return pointer to selected station or NULL
+ */
+PianoStation_t *BarUiSelectStationByName (BarApp_t *app, PianoStation_t *stations, char *nameStr) {
+	PianoStation_t **sortedStations = NULL, *retStation = NULL;
+	size_t stationCount, i, lastDisplayed, displayCount;
+
+	if (stations == NULL) {
+		BarUiMsg (&app->settings, MSG_ERR, "No station available.\n");
+		return NULL;
+	}
+
+    //	memset (buf, 0, sizeof (buf));
+
+	/* sort and print stations */
+	sortedStations = BarSortedStations (stations, &stationCount,
+			app->settings.sortOrder);
+
+    displayCount = 0;
+    for (i = 0; i < stationCount; i++) {
+      const PianoStation_t *currStation = sortedStations[i];
+      /* filter stations */
+      if (BarStrCaseStr (currStation->name, nameStr ) != NULL) {
+        BarUiMsg (&app->settings, MSG_LIST, "%2zi) %c%c%c %s\n", i,
+                  currStation->useQuickMix ? 'q' : ' ',
+                  currStation->isQuickMix ? 'Q' : ' ',
+                  !currStation->isCreator ? 'S' : ' ',
+                  currStation->name);
+        ++displayCount;
+        retStation = sortedStations[i];
+        lastDisplayed = i;
+      }
+    }
+	free (sortedStations);
+	return retStation;
+}
+
+
+
+/*	pick last station 
+ *	@param app handle
+ *	@param stations that should be listed
+ *	@param prompt string
+ *	@param called if input was not a number
+ *	@param auto-select if only one station remains after filtering
+ *	@return pointer to selected station or NULL
+ */
+PianoStation_t *BarUiSelectLastStation (BarApp_t *app, PianoStation_t *stations,
+		const char *prompt, BarUiSelectStationCallback_t callback,
+		bool autoselect) {
+	PianoStation_t **sortedStations = NULL, *retStation = NULL;
+	size_t stationCount, i, lastDisplayed, displayCount;
+	char buf[100];
+
+	if (stations == NULL) {
+		BarUiMsg (&app->settings, MSG_ERR, "No station available.\n");
+		return NULL;
+	}
+
+	memset (buf, 0, sizeof (buf));
+
+	/* sort and print stations */
+	sortedStations = BarSortedStations (stations, &stationCount,
+			app->settings.sortOrder);
+
+    retStation = sortedStations[stationCount - 1];
+
+	free (sortedStations);
+	return retStation;
+}
+
 
 /*	let user pick one song
  *	@param pianobar settings

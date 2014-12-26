@@ -384,8 +384,39 @@ static void BarMainLoop (BarApp_t *app) {
 		 * song */
 		if (app->player.mode == PLAYER_DEAD && app->curStation != NULL) {
 			/* what's next? */
+
+          PianoSong_t *curSong = app->playlist;
+          if (app->playlist != NULL) {
+            BarUiMsg (&app->settings, MSG_INFO, "Why not working?     %s |  %s |||  %d  %d\n", app->curStation->name, curSong->artist, (BarStrCaseStr2(app->curStation->name, curSong->artist) == NULL), (BarStrCaseStr2(curSong->artist, app->curStation->name) == NULL)  );
+          }
+          
+          if (app->metaShuffle &&  (BarStrCaseStr2(app->curStation->name, curSong->artist) == NULL)  ){
+           
+                // create new station from current artist
+
+                app->metaArtist = curSong->artist;
+                char *curArtist =  curSong->artist;
+
+                createStationFromCurrentArtist(app);
+
+                // delete current station
+                deleteCurrentStation(app);
+                
+              // BarUiMsg (&app->settings, MSG_ERR, "In the main loop.  %d   %s\n", app->metaShuffle, app->curStation->name);
+
+          //app->metaArtist = "africa";
+              //BarUiMsg (&app->settings, MSG_ERR, "In main loop.     %s\n", BarStrCaseStr2(app->curStation->name, "notw") );
+                PianoStation_t *newStation = BarUiSelectStationByName (app, app->ph.stations, curArtist);
+                
+                BarUiMsg (&app->settings, MSG_ERR, "Random walk. Now in station:  %s\n", newStation->name );
+                app->curStation = newStation;
+            }
+
+
+          
 			if (app->playlist != NULL) {
 				PianoSong_t *histsong = app->playlist;
+                // make playlist from that song.
 				app->playlist = PianoListNextP (app->playlist);
 				histsong->head.next = NULL;
 				BarUiHistoryPrepend (app, histsong);
@@ -393,6 +424,7 @@ static void BarMainLoop (BarApp_t *app) {
 			if (app->playlist == NULL) {
 				BarMainGetPlaylist (app);
 			}
+            
 			/* song ready to play */
 			if (app->playlist != NULL) {
 				BarMainStartPlayback (app, &playerThread);

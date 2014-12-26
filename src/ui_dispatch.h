@@ -62,6 +62,8 @@ static const BarUiDispatchAction_t dispatchActions[BAR_KS_COUNT] = {
 				"act_stationdelete"},
 		{'e', BAR_DC_SONG, BarUiActExplain, "explain why this song is played",
 				"act_songexplain"},
+        {'f',  BAR_DC_GLOBAL | BAR_DC_STATION, BarUiActToggleMetaShuffle, "do something custom",
+				"act_custom"},
 		{'g', BAR_DC_GLOBAL, BarUiActStationFromGenre, "add genre station",
 				"act_stationaddbygenre"},
 		{'h', BAR_DC_GLOBAL, BarUiActHistory, "song history", "act_history"},

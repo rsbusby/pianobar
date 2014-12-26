@@ -40,6 +40,10 @@ typedef void (*BarUiSelectStationCallback_t) (BarApp_t *app, char *buf);
 void BarUiMsg (const BarSettings_t *, const BarUiMsg_t, const char *, ...) __attribute__((format(printf, 3, 4)));
 PianoStation_t *BarUiSelectStation (BarApp_t *, PianoStation_t *, const char *,
 		BarUiSelectStationCallback_t, bool);
+PianoStation_t *BarUiSelectStationByName (BarApp_t *, PianoStation_t *, char *);
+PianoStation_t *BarUiSelectLastStation (BarApp_t *, PianoStation_t *, const char *,
+		BarUiSelectStationCallback_t, bool);
+
 PianoSong_t *BarUiSelectSong (const BarSettings_t *, PianoSong_t *,
 		BarReadlineFds_t *);
 PianoArtist_t *BarUiSelectArtist (BarApp_t *, PianoArtist_t *);
@@ -54,5 +58,9 @@ void BarUiStartEventCmd (const BarSettings_t *, const char *,
 int BarUiPianoCall (BarApp_t * const, PianoRequestType_t,
 		void *, PianoReturn_t *, WaitressReturn_t *);
 void BarUiHistoryPrepend (BarApp_t *app, PianoSong_t *song);
+
+static const char *BarStrCaseStr (const char *haystack, const char *needle); 
+
+char *BarStrCaseStr2 (const char *haystack, const char *needle); 
 
 #endif /* SRC_UI_H_46P20TS0 */

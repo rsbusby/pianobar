@@ -43,6 +43,10 @@ typedef struct {
 	char doQuit;
 	BarReadlineFds_t input;
 	unsigned int playerErrors;
+    /* denotes whether app is in random-walk mode */
+    unsigned int metaShuffle;
+    char *metaArtist;
+    
 } BarApp_t;
 
 #endif /* SRC_MAIN_H_4ZGSCG6X */

@@ -40,6 +40,7 @@ BarUiActCallback(BarUiActCreateStation);
 BarUiActCallback(BarUiActCreateStationFromSong);
 BarUiActCallback(BarUiActAddSharedStation);
 BarUiActCallback(BarUiActDeleteStation);
+BarUiActCallback(BarUiActForceDeleteStation);
 BarUiActCallback(BarUiActExplain);
 BarUiActCallback(BarUiActStationFromGenre);
 BarUiActCallback(BarUiActSongInfo);
@@ -50,6 +51,9 @@ BarUiActCallback(BarUiActPause);
 BarUiActCallback(BarUiActTogglePause);
 BarUiActCallback(BarUiActRenameStation);
 BarUiActCallback(BarUiActSelectStation);
+BarUiActCallback(BarUiActSelectLastStation);
+BarUiActCallback(BarUiActForceCreateStationFromArtist);
+BarUiActCallback(BarUiActToggleMetaShuffle);
 BarUiActCallback(BarUiActTempBanSong);
 BarUiActCallback(BarUiActPrintUpcoming);
 BarUiActCallback(BarUiActSelectQuickMix);
@@ -61,5 +65,9 @@ BarUiActCallback(BarUiActVolDown);
 BarUiActCallback(BarUiActVolUp);
 BarUiActCallback(BarUiActManageStation);
 BarUiActCallback(BarUiActVolReset);
+
+void createStationFromCurrentArtist(BarApp_t *app);
+void deleteCurrentStation(BarApp_t *app);
+
 
 #endif /* SRC_UI_ACT_H_1FEFTC06 */
